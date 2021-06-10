@@ -47,7 +47,7 @@ import org.apache.commons.cli.Option;
  */
 public class HuaweiCMObjectParser {
 
-    final static String VERSION = "1.0.14";
+    final static String VERSION = "1.0.15";
     
     Logger logger = LoggerFactory.getLogger(HuaweiCMObjectParser.class);
         
@@ -542,7 +542,7 @@ public class HuaweiCMObjectParser {
                 String attrName = attribute.getName().getLocalPart();
                 String attrValue = attribute.getValue();
                 if (attrName.equals("name")) {
-                    className = attrValue.toUpperCase();
+                    className = cleanMOName(attrValue.toUpperCase());
                     //className = attrValue;
                     LinkedHashMap<String, String> Lhm = new LinkedHashMap<String, String>();
 //                    classNameAttrsMap.put(className, Lhm);
@@ -1223,5 +1223,42 @@ public class HuaweiCMObjectParser {
             System.exit(1);
         }
 
+    }
+    
+    private String cleanMOName(String moName) {
+    	//logger.info("Cleaning " + moName + "...");
+    	//s/\"(CELLALGOSWITCH|GTPU|CNOPERATOR|USERPRIORITY)_BSC(6900|6910)(U|GU|UMTS)\"/\"U\U\1\"/ig;
+    	String cleanName = moName.replaceAll("^(CELLALGOSWITCH|GTPU|CNOPERATOR|USERPRIORITY)_BSC(6900|6910)(U|GU|UMTS)$", "U$1").toUpperCase();
+    	
+    	//s/_(BSC6900GSM|BSC6900UMTS|BSC6900GU|BSC6910GSM|BSC6910UMTS|BSC6910GU)//ig;
+    	cleanName = cleanName.replaceAll("_(BSC6900GSM|BSC6900UMTS|BSC6900GU|BSC6910GSM|BSC6910UMTS|BSC6910GU)$", "");
+    			
+    	//s/_(BTS3900|PICOBTS3900|BTS3911B|PICOBTS3911B|MICROBTS3900|MICROBTS3911B|BTS5900|BTS59005G)//ig;
+    	cleanName = cleanName.replaceAll("_(BTS3900|PICOBTS3900|BTS3911B|PICOBTS3911B|MICROBTS3900|MICROBTS3911B|BTS5900|BTS59005G)$", "");
+    	
+    	//s/BSC(6910|6900)(UMTS|GSM)Function/FUNCTION/ig;
+    	cleanName = cleanName.replaceAll("BSC(6910|6900)(UMTS|GSM)FUNCTION", "FUNCTION");
+    	
+    	//s/BSC(6910|6900)Equipment/EQUIPMENT/ig;
+    	cleanName = cleanName.replaceAll("BSC(6910|6900)EQUIPMENT", "EQUIPMENT");
+    	
+    	//s/<class name=\"(.*)_MSCSERVER/<class name=\"\1/ig;
+    	cleanName = cleanName.replaceAll("(.*)_MSCSERVER$", "$1");
+    	
+    	//s/<class name=\"(.*)_ENODEB\"/<class name=\"\1\"/ig;
+    	cleanName = cleanName.replaceAll("(.*)_ENODEB$", "$1");
+    	
+    	//s/<class name=\"(.*)3900/<class name=\"\1/ig;
+    	cleanName = cleanName.replaceAll("(.*)3900", "$1");
+    	
+    	///<class name=\"ENODEBALGOSWITCH\"/b;
+    	if(cleanName.equals("ENODEBALGOSWITCH")) {
+    		return cleanName;
+    	}
+    	
+    	//s/<class name=\"ENODEB([^\"]+)\"/<class name=\"\U\1\"/ig;
+    	cleanName = cleanName.replaceAll("^ENODEB([^\"]+)$", "$1");
+    	
+    	return cleanName;
     }
 }
